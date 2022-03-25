@@ -4,6 +4,20 @@ import os
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.preprocessing.image import load_img
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import AveragePooling2D
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 
 DIRECTORY = r"C:\Users\asifu\Desktop\GitHub\Face-Mask-Detection\dataset"
 CATEGORIES = ["with_mask", "without_mask"]
@@ -14,8 +28,10 @@ print("[INFO] loading images...")
 data = []
 labels = []
 
+# For each category do image preprocessing and their corresponding labels
 for category in CATEGORIES:
     path = os.path.join(DIRECTORY, category)
+
     for img in os.listdir(path):
         img_path = os.path.join(path, img)
         image = load_img(img_path, target_size=(200, 200))
@@ -24,3 +40,76 @@ for category in CATEGORIES:
         
         data.append(image)
         labels.append(category)
+
+# converting categorical variables as binary vectors (one-hot encoding)
+lb = LabelBinarizer()
+labels = lb.fit_transform(labels)
+labels = to_categorical(labels)
+
+data = np.array(data, dtype="float32")
+labels = np.array(labels)
+
+(trainX, testX, trainY, testY) = train_test_split(data, labels,	test_size=0.22, stratify=labels, random_state=42)
+
+# construct the training image generator for data augmentation
+augImg = ImageDataGenerator(
+	rotation_range=20,
+	zoom_range=0.15,
+	width_shift_range=0.2,
+	height_shift_range=0.2,
+	shear_range=0.15,
+	horizontal_flip=True,
+	fill_mode="nearest"
+)
+
+# load the MobileNetV2 network, ensuring the head FC layer sets are left off
+baseModel = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(200, 200, 3)))
+
+# construct the head of the model that will be placed on top of the base model
+headModel = baseModel.output
+headModel = AveragePooling2D(pool_size=(7, 7))(headModel)
+headModel = Flatten(name="flatten")(headModel)
+headModel = Dense(128, activation="relu")(headModel)
+headModel = Dropout(0.5)(headModel)
+headModel = Dense(2, activation="softmax")(headModel)
+
+# place the head FC model on top of the base model (this will become the actual model we will train)
+model = Model(inputs=baseModel.input, outputs=headModel)
+
+# loop over all layers in the base model and freeze them to ensure they will not be updated/changed during the first training process
+for layer in baseModel.layers:
+	layer.trainable = False
+
+# initialize the initial learning rate, number of epochs to train for and batch size
+INIT_LR = 0.0001
+EPOCHS = 18
+BS = 40
+
+# compile our model
+print("[INFO] compiling model...")
+opt = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
+model.compile(loss="binary_crossentropy", optimizer=opt, metrics=["accuracy"])
+
+# train the head of the network
+print("[INFO] training head...")
+head = model.fit(
+	augImg.flow(trainX, trainY, batch_size=BS),
+	steps_per_epoch=len(trainX) // BS,
+	validation_data=(testX, testY),
+	validation_steps=len(testX) // BS,
+	epochs=EPOCHS
+)
+
+# make predictions on the testing set
+print("[INFO] evaluating network...")
+pred = model.predict(testX, batch_size=BS)
+
+# for each image in the testing set we need to find the index of the label with corresponding largest predicted probability
+pred = np.argmax(pred, axis=1)
+
+# show the classification report
+print(classification_report(testY.argmax(axis=1), pred,	target_names=lb.classes_))
+
+# serialize the model to disk
+print("[INFO] saving mask detector model...")
+model.save("mask_detector.model", save_format="h5")
