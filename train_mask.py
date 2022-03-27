@@ -25,7 +25,6 @@ from sklearn.metrics import classification_report
 DIRECTORY = r"C:\Users\asifu\Desktop\GitHub\Face-Mask-Detection\dataset"
 CATEGORIES = ["with_mask", "without_mask"]
 
-# Get images from the two folders 
 print("[INFO] loading images...")
 
 data = []

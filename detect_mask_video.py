@@ -4,7 +4,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import numpy as np
 import imutils
-import time
 import cv2
 
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
@@ -23,7 +22,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 	# initialize our list of faces, their corresponding locations, and the list of predictions from our face mask network
 	faces = []
 	locs = []
-	preds = []
+	probs = []
 
 	# loop over the detections
 	for i in range(0, detections.shape[2]):
@@ -53,14 +52,11 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 
 	# only make a predictions if at least one face is detected 
 	if len(faces) > 0:
-		# for faster inference we'll make batch predictions on *all*
-		# faces at the same time rather than one-by-one predictions
-		# in the above `for` loop
 		faces = np.array(faces, dtype="float32")
-		preds = maskNet.predict(faces, batch_size=32)
+		probs = maskNet.predict(faces, batch_size=32)
 
 	# return a 2-tuple of the face locations and their corresponding locations
-	return (locs, preds)
+	return (locs, probs)
 
 # load our serialized face detector model from disk
 print("[INFO] Loading face detector model...")
