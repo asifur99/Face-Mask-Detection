@@ -13,8 +13,6 @@ from tensorflow.keras.models import load_model
 from imutils.video import VideoStream
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
-	# grab the dimensions of the frame and then construct a blob
-	# from it
 	(h, w) = frame.shape[:2]
 	blob = cv2.dnn.blobFromImage(frame, 1.0, (224, 224), (104.0, 177.0, 123.0))
 
@@ -61,8 +59,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 		faces = np.array(faces, dtype="float32")
 		preds = maskNet.predict(faces, batch_size=32)
 
-	# return a 2-tuple of the face locations and their corresponding
-	# locations
+	# return a 2-tuple of the face locations and their corresponding locations
 	return (locs, preds)
 
 # load our serialized face detector model from disk
