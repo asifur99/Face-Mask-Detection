@@ -2,6 +2,9 @@ import os
 # Disabling GPU registration
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import AveragePooling2D
@@ -18,8 +21,6 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
-import numpy as np
 
 DIRECTORY = r"C:\Users\asifu\Desktop\GitHub\Face-Mask-Detection\dataset"
 CATEGORIES = ["with_mask", "without_mask"]
@@ -36,7 +37,7 @@ for category in CATEGORIES:
 
     for img in os.listdir(path):
         img_path = os.path.join(path, img)
-        image = load_img(img_path, target_size=(200, 200))
+        image = load_img(img_path, target_size=(224, 224))
         image = img_to_array(image)
         image = preprocess_input(image)
         
@@ -65,7 +66,7 @@ augImg = ImageDataGenerator(
 )
 
 # load the MobileNetV2 network, ensuring the head FC layer sets are left off
-baseModel = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(200, 200, 3)))
+baseModel = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(224, 224, 3)))
 
 # construct the head of the model that will be placed on top of the base model
 headModel = baseModel.output
@@ -84,7 +85,7 @@ for layer in baseModel.layers:
 
 # initialize the initial learning rate, number of epochs to train for and batch size
 INIT_LR = 0.0001
-EPOCHS = 20
+EPOCHS = 20 
 BS = 40
 
 # compile our model
