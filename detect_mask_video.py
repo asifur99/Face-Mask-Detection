@@ -70,6 +70,7 @@ maskNet = load_model("mask_detector.model")
 
 # initialize the video stream
 print("[INFO] starting video stream...")
+print("[INFO] Press 'e' to terminate session...")
 vs = VideoStream(src=0).start()
 
 # loop over the frames from the video stream
