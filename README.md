@@ -15,5 +15,7 @@ I have implemented a system where it will detect a user in real time and determi
 
 NOTE: Please ensure that the following variables in the directory are relative to the root directory:
 
-- 'DIRECTORY', 'maskNet' : variable in train_mask.py
-- 'faceDetectorPath', 'weightsPath' : variable in detect_mask_video.py
+- 'DIRECTORY', 'maskNet' : variables in train_mask.py
+- 'faceDetectorPath', 'weightsPath' : variables in detect_mask_video.py
+
+As the errors could be caused due to the filepaths not correct or the modules not installed properly.

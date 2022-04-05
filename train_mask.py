@@ -75,7 +75,7 @@ headModel = Dense(128, activation="relu")(headModel)
 headModel = Dropout(0.5)(headModel)
 headModel = Dense(2, activation="softmax")(headModel)
 
-# place the head FC model on top of the base model (this will become the actual model we will train)
+# place the head FC model on top of the base model as this will become the actual model we will train
 model = Model(inputs=baseModel.input, outputs=headModel)
 
 # loop over all layers in the base model and freeze them to ensure they will not be updated/changed during the first training process
