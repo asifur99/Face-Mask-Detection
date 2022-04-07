@@ -84,7 +84,7 @@ for layer in baseModel.layers:
 
 # initialize the initial learning rate, number of epochs to train for and batch size
 INIT_LR = 0.0001
-EPOCHS = 20 
+EPOCHS = 32 
 BS = 40
 
 # compile our model
